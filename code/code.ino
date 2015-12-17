@@ -2,6 +2,7 @@
 #include "RTClib.h"
 #include <SD.h>
 #include <LiquidCrystal.h>
+#include <dht.h>
 
  
 RTC_DS1307 RTC;
@@ -9,9 +10,18 @@ Sd2Card card;
 SdVolume volume;
 SdFile root;
 LiquidCrystal lcd(7, 6, 5, 4, 3, 2);
-
+dht DHT;
 
 const int chipSelect = 10;
+// Pressure Sensor
+const int MPX4250AP_pin = 3;
+double MPX4250AP_read_value = 0;
+float pressurekPa = 0;
+// Temperature Sensor
+const int temperatureSensorPin = 2;
+const int lightSensorPin = 1;
+int lightLevel, high = 0, low = 1023;
+
  
 void setup () {
   pinMode(10, OUTPUT);
@@ -96,8 +106,25 @@ void loop () {
     Serial.println();
     
     Serial.println();
-    lcd.setCursor(0, 1);
-    // print the number of seconds since reset:
-    lcd.print(millis() / 1000);
+    
+    showMeasurementsOnLCD();
     delay(3000);
+}
+
+void showMeasurementsOnLCD() {
+    MPX4250AP_read_value = analogRead(MPX4250AP_pin);
+    pressurekPa = (MPX4250AP_read_value*(.00488)/(.022)+20);
+    lcd.setCursor(0, 1); lcd.print("P:");
+    lcd.setCursor(2, 1); lcd.print(pressurekPa);
+
+    lcd.setCursor(0,0); lcd.print("C:");
+    float celsius = (analogRead(temperatureSensorPin)/1024.0)*500;
+    lcd.setCursor(2,0); lcd.print(celsius);
+
+    lcd.setCursor(10,1); lcd.print("L:");
+    lcd.setCursor(12,1); lcd.print(analogRead(lightSensorPin));
+    
+    lcd.setCursor(8,0);
+    lcd.print(millis());
+  
 }
