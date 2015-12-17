@@ -1,8 +1,7 @@
 #include <Wire.h>
-#include "RTClib.h"
 #include <SD.h>
 #include <LiquidCrystal.h>
-#include <dht.h>
+#include "RTClib.h"
 
  
 RTC_DS1307 RTC;
@@ -10,17 +9,18 @@ Sd2Card card;
 SdVolume volume;
 SdFile root;
 LiquidCrystal lcd(7, 6, 5, 4, 3, 2);
-dht DHT;
-
 const int chipSelect = 10;
+File logFile;
+
 // Pressure Sensor
 const int MPX4250AP_pin = 3;
 double MPX4250AP_read_value = 0;
 float pressurekPa = 0;
 // Temperature Sensor
 const int temperatureSensorPin = 2;
+// Light Sensor
 const int lightSensorPin = 1;
-int lightLevel, high = 0, low = 1023;
+int lightLevel;
 
  
 void setup () {
@@ -107,11 +107,11 @@ void loop () {
     
     Serial.println();
     
-    showMeasurementsOnLCD();
-    delay(3000);
+    showAndWriteMeasurements();
+    delay(10000);
 }
 
-void showMeasurementsOnLCD() {
+void showAndWriteMeasurements() {
     MPX4250AP_read_value = analogRead(MPX4250AP_pin);
     pressurekPa = (MPX4250AP_read_value*(.00488)/(.022)+20);
     lcd.setCursor(0, 1); lcd.print("P:");
@@ -122,9 +122,39 @@ void showMeasurementsOnLCD() {
     lcd.setCursor(2,0); lcd.print(celsius);
 
     lcd.setCursor(10,1); lcd.print("L:");
-    lcd.setCursor(12,1); lcd.print(analogRead(lightSensorPin));
+    lightLevel = analogRead(lightSensorPin);
+    lcd.setCursor(12,1); lcd.print(lightLevel);
     
     lcd.setCursor(8,0);
     lcd.print(millis());
+    
+    logFile = SD.open("log.txt", FILE_WRITE);
+    if (logFile) {
+        DateTime now = RTC.now();
+        logFile.print(now.year(), DEC);
+        logFile.print('/');
+        logFile.print(now.month(), DEC);
+        logFile.print('/');
+        logFile.print(now.day(), DEC);
+        logFile.print(' ');
+        logFile.print(now.hour(), DEC);
+        logFile.print(':');
+        logFile.print(now.minute(), DEC);
+        logFile.print(':');
+        logFile.print(now.second(), DEC);
+        logFile.println();
+        
+        logFile.print("Pressure: ");
+        logFile.println(pressurekPa);
+        logFile.print("Celsius: ");
+        logFile.println(celsius);
+        logFile.print("Light level:");
+        logFile.println(lightLevel);
+        
+        logFile.close();
+        Serial.println("Measurements written to log file");
+    } else {
+      Serial.println("error opening log file");
+    }
   
 }
