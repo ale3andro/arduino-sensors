@@ -35,15 +35,13 @@ void setup () {
     // uncomment it & upload to set the time, date and start run the RTC!
     //RTC.adjust(DateTime(__DATE__, __TIME__));
   }
-  if (!card.init(SPI_HALF_SPEED, chipSelect)) {
-    Serial.println("initialization failed. Things to check:");
-    Serial.println("* is a card is inserted?");
-    Serial.println("* Is your wiring correct?");
-    Serial.println("* did you change the chipSelect pin to match your shield or module?");
+ // see if the card is present and can be initialized:
+  if (!SD.begin(chipSelect)) {
+    Serial.println("Card failed, or not present");
+    // don't do anything more:
     return;
-  } else {
-   Serial.println("Wiring is correct and a card is present."); 
   }
+  Serial.println("card initialized.");
   lcd.begin(16, 2);
   // print the type of card
   Serial.print("\nCard type: ");
